@@ -1,4 +1,4 @@
-import React, { cloneElement, useMemo, useState } from 'react';
+import React, { cloneElement, useEffect, useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import type { ChatBotProps } from './types/props';
 import type { RenderedStep, Step, StepId } from './types/steps';
@@ -166,6 +166,23 @@ export default function ChatBot(props: ChatBotProps) {
   };
 
   const currentInputAttributes = currentStep && isUserStep(currentStep) ? currentStep.inputAttributes : undefined;
+
+  useEffect(() => {
+    if (!steps.length) return;
+    if (renderedSteps.length !== 1) return;
+    const initial = stepMap[stepKey(steps[0].id)];
+    if (!initial) return;
+    if (isUserStep(initial) || isOptionsStep(initial) || (isCustomStep(initial) && initial.waitAction)) return;
+
+    const nextId = nextStepId(initial, { value: undefined, steps: renderedById });
+    if (initial.end || nextId === undefined) {
+      finish(renderedSteps, values);
+      return;
+    }
+
+    goTo(nextId, undefined, { rendered: renderedSteps, values });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <View style={[styles.container, style]}>

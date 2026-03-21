@@ -1,3 +1,4 @@
+export { default } from './ChatBot';
 export { default as ChatBot } from './ChatBot';
 export type { ChatBotProps, ChatBotHandleEndPayload } from './types/props';
 export type {
