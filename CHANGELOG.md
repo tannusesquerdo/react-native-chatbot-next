@@ -10,6 +10,7 @@
 - Avatar support (`botAvatar`, `userAvatar`, hide user avatar mode).
 - Custom-step injection contract (`triggerNextStep`, `step`, `steps`, `previousStep`).
 - Runtime state helpers for map/update/end-payload creation.
+- Auto-scroll to bottom on new messages.
 - Test suite for trigger, delay, runtime state, and conversation simulation.
 
 ### Notes

@@ -1,4 +1,4 @@
-import React, { cloneElement, useEffect, useMemo, useState } from 'react';
+import React, { cloneElement, useEffect, useMemo, useRef, useState } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from 'react-native';
 import type { ChatBotProps } from './types/props';
 import type { RenderedStep, Step, StepId } from './types/steps';
@@ -70,6 +70,7 @@ export default function ChatBot(props: ChatBotProps) {
   const [values, setValues] = useState<unknown[]>([]);
 
   const renderedById = useMemo(() => toRenderedMap(renderedSteps), [renderedSteps]);
+  const scrollRef = useRef<ScrollView>(null);
   const currentRendered = renderedSteps[renderedSteps.length - 1];
   const currentStep = currentRendered ? stepMap[stepKey(currentRendered.id)] : undefined;
 
@@ -193,7 +194,12 @@ export default function ChatBot(props: ChatBotProps) {
       keyboardVerticalOffset={keyboardVerticalOffset}
     >
       {headerComponent}
-      <ScrollView style={[styles.content, contentStyle]} {...(scrollViewProps as object)}>
+      <ScrollView
+        ref={scrollRef}
+        style={[styles.content, contentStyle]}
+        onContentSizeChange={() => scrollRef.current?.scrollToEnd({ animated: true })}
+        {...(scrollViewProps as object)}
+      >
         {renderedSteps.map((step, idx) => {
           const fullStep = stepMap[stepKey(step.id)];
 
