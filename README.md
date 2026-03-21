@@ -13,7 +13,7 @@ Initial implementation in progress:
 - Custom step injection (`triggerNextStep`, `step`, `steps`, `previousStep`)
 - Legacy-style customization props (baseline)
 - Keyboard avoidance support (`keyboardVerticalOffset`) + custom step styling (`customStyle`)
-- Unit tests (trigger + delay semantics)
+- Unit tests (trigger + delay + runtime + waitAction semantics)
 
 ## Install
 
