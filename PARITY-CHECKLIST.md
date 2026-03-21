@@ -7,7 +7,7 @@
 - [x] delay handling (`botDelay`, `userDelay`, `customDelay`)
 - [x] waitAction custom behavior
 - [x] replace custom behavior (latest-only render)
-- [ ] exhaustive legacy edge-case replay fixtures
+- [~] legacy edge-case replay fixtures (baseline set added; still expanding)
 
 ## UI/Behavior
 - [x] user/bot bubble color and font props
