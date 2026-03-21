@@ -39,8 +39,12 @@ export function App() {
 
 ## Next milestones
 
-1. Delay behavior parity (`botDelay`, `userDelay`, `customDelay`)
-2. Full custom step contract (`triggerNextStep`, `waitAction`, `replace`, `asMessage`)
-3. Avatar parity + hide user avatar
-4. End payload parity tests
-5. Snapshot parity against original default styles
+1. Full component-level render tests (React Native Testing Library)
+2. Tighten custom-step `replace` parity for nested/branch flows
+3. Snapshot parity against original default styles
+4. Publish `0.1.x` beta and validate against real legacy examples
+
+## Docs
+
+- [MIGRATION.md](./MIGRATION.md)
+- [CHANGELOG.md](./CHANGELOG.md)
