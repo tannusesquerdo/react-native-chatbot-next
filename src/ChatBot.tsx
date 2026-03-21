@@ -1,5 +1,5 @@
 import React, { cloneElement, useEffect, useMemo, useState } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from 'react-native';
 import type { ChatBotProps } from './types/props';
 import type { RenderedStep, Step, StepId } from './types/steps';
 import { Bubble } from './components/Bubble';
@@ -43,6 +43,7 @@ export default function ChatBot(props: ChatBotProps) {
     botFontColor,
     userFontColor,
     contentStyle,
+    customStyle,
     optionStyle,
     optionElementStyle,
     optionFontColor,
@@ -52,6 +53,7 @@ export default function ChatBot(props: ChatBotProps) {
     submitButtonContent,
     submitButtonStyle,
     scrollViewProps,
+    keyboardVerticalOffset = Platform.OS === 'ios' ? 44 : 0,
     botDelay = 1000,
     userDelay = 1000,
     customDelay = 1000,
@@ -185,7 +187,11 @@ export default function ChatBot(props: ChatBotProps) {
   }, []);
 
   return (
-    <View style={[styles.container, style]}>
+    <KeyboardAvoidingView
+      style={[styles.container, style]}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      keyboardVerticalOffset={keyboardVerticalOffset}
+    >
       {headerComponent}
       <ScrollView style={[styles.content, contentStyle]} {...(scrollViewProps as object)}>
         {renderedSteps.map((step, idx) => {
@@ -239,7 +245,7 @@ export default function ChatBot(props: ChatBotProps) {
 
             if (isCustom && fullStep.asMessage) {
               return (
-                <View key={`${String(step.id)}-${idx}`} style={styles.customAsMessage}>
+                <View key={`${String(step.id)}-${idx}`} style={[styles.customAsMessage, customStyle]}>
                   {enhanced}
                 </View>
               );
@@ -247,7 +253,7 @@ export default function ChatBot(props: ChatBotProps) {
 
             if (!shouldRenderCustomStep(fullStep, idx, renderedSteps.length)) return null;
 
-            return <View key={`${String(step.id)}-${idx}`}>{enhanced}</View>;
+            return <View key={`${String(step.id)}-${idx}`} style={customStyle}>{enhanced}</View>;
           }
 
           return null;
@@ -265,7 +271,7 @@ export default function ChatBot(props: ChatBotProps) {
           inputAttributes={currentInputAttributes as Record<string, unknown>}
         />
       ) : null}
-    </View>
+    </KeyboardAvoidingView>
   );
 }
 

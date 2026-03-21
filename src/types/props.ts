@@ -17,6 +17,7 @@ export type ChatBotProps = {
   hideUserAvatar?: boolean;
   botAvatar?: string;
   userAvatar?: string;
+  keyboardVerticalOffset?: number;
   botBubbleColor?: string;
   userBubbleColor?: string;
   botFontColor?: string;
@@ -35,6 +36,7 @@ export type ChatBotProps = {
   optionFontColor?: string;
   optionBubbleColor?: string;
   contentStyle?: object;
+  customStyle?: object;
   footerStyle?: object;
   inputStyle?: object;
   submitButtonStyle?: object;

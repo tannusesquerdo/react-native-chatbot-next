@@ -12,6 +12,7 @@ Initial implementation in progress:
 - Avatar support + hide user avatar
 - Custom step injection (`triggerNextStep`, `step`, `steps`, `previousStep`)
 - Legacy-style customization props (baseline)
+- Keyboard avoidance support (`keyboardVerticalOffset`) + custom step styling (`customStyle`)
 - Unit tests (trigger + delay semantics)
 
 ## Install
