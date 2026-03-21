@@ -6,7 +6,8 @@ import { applyUpdateStep, createEndPayload, toRenderedMap } from './runtimeState
 
 export type FlowInput =
   | { kind: 'user'; value: string }
-  | { kind: 'option'; value: unknown };
+  | { kind: 'option'; value: unknown }
+  | { kind: 'custom'; value?: unknown; trigger?: StepId };
 
 export type SimulateConfig = {
   botDelay?: number;
@@ -80,8 +81,18 @@ export function simulateFlow(steps: Step[], inputs: FlowInput[], cfg: SimulateCo
       return;
     }
 
-    if (isCustomStep(step) && !step.waitAction) {
+    if (isCustomStep(step)) {
+      if (step.waitAction) {
+        const input = inputs[inputCursor++];
+        if (!input || input.kind !== 'custom') return;
+        if (input.value !== undefined) values = [...values, input.value];
+        const next = input.trigger ?? nextStepId(step, { value: input.value, steps: toRenderedMap(rendered) });
+        goTo(next, input.value);
+        return;
+      }
+
       goTo(nextStepId(step, { value, steps: toRenderedMap(rendered) }), value);
+      return;
     }
   };
 

@@ -25,4 +25,17 @@ describe('simulateFlow waitAction/custom trigger semantics', () => {
     expect(out.steps['1']?.message).toBe('welcome admin');
     expect(out.values).toEqual(['admin']);
   });
+
+  it('advances waitAction custom with explicit override trigger/value', () => {
+    const steps: Step[] = [
+      { id: '0', component: {} as any, waitAction: true, trigger: '1' },
+      { id: '1', message: 'default', end: true },
+      { id: '2', message: ({ previousValue }) => `override-${String(previousValue)}`, end: true },
+    ];
+
+    const out = simulateFlow(steps, [{ kind: 'custom', value: 42, trigger: '2' }], { botDelay: 1, userDelay: 1, customDelay: 1 });
+    expect(out.renderedSteps.map((s) => String(s.id))).toEqual(['0', '2']);
+    expect(out.steps['2']?.message).toBe('override-42');
+    expect(out.values).toEqual([42]);
+  });
 });

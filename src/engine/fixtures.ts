@@ -83,4 +83,18 @@ export const parityFixtures: FlowFixture[] = [
       values: [],
     },
   },
+  {
+    name: 'custom waitAction triggerNextStep override trigger/value',
+    steps: [
+      { id: '0', message: 'start', trigger: '1' },
+      { id: '1', component: {} as any, waitAction: true, trigger: '2' },
+      { id: '2', message: 'default path', end: true },
+      { id: '3', message: ({ previousValue }) => `override:${String(previousValue)}`, end: true },
+    ],
+    inputs: [{ kind: 'custom', value: 'x', trigger: '3' }],
+    expected: {
+      renderedIds: ['0', '1', '3'],
+      values: ['x'],
+    },
+  },
 ];
