@@ -8,6 +8,7 @@ type InputBarProps = {
   submitButtonStyle?: object;
   submitButtonContent?: string | React.ReactElement;
   footerStyle?: object;
+  inputAttributes?: Record<string, unknown>;
 };
 
 export function InputBar({
@@ -17,6 +18,7 @@ export function InputBar({
   submitButtonStyle,
   submitButtonContent = 'SEND',
   footerStyle,
+  inputAttributes,
 }: InputBarProps) {
   const [value, setValue] = useState('');
 
@@ -35,6 +37,7 @@ export function InputBar({
         value={value}
         onChangeText={setValue}
         onSubmitEditing={handleSend}
+        {...inputAttributes}
       />
       <Pressable style={[styles.button, submitButtonStyle]} onPress={handleSend}>
         {typeof submitButtonContent === 'string' ? <Text style={styles.buttonText}>{submitButtonContent}</Text> : submitButtonContent}

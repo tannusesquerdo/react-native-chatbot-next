@@ -17,17 +17,9 @@ function toRendered(step: Step, steps: Record<string, RenderedStep>, previousVal
     return { id: step.id, message, metadata: step.metadata };
   }
 
-  if (isUserStep(step)) {
-    return { id: step.id, user: true, metadata: step.metadata };
-  }
-
-  if (isOptionsStep(step)) {
-    return { id: step.id, options: step.options, metadata: step.metadata };
-  }
-
-  if (isCustomStep(step)) {
-    return { id: step.id, component: step.component, metadata: step.metadata };
-  }
+  if (isUserStep(step)) return { id: step.id, user: true, metadata: step.metadata };
+  if (isOptionsStep(step)) return { id: step.id, options: step.options, metadata: step.metadata };
+  if (isCustomStep(step)) return { id: step.id, component: step.component, metadata: step.metadata };
 
   return { id: step.id, metadata: step.metadata };
 }
@@ -73,21 +65,34 @@ export default function ChatBot(props: ChatBotProps) {
     const first = stepMap[stepKey(firstStepId)];
     return first ? [toRendered(first, {})] : [];
   });
-
   const [values, setValues] = useState<unknown[]>([]);
 
   const renderedById = useMemo(() => toRenderedMap(renderedSteps), [renderedSteps]);
-
   const currentRendered = renderedSteps[renderedSteps.length - 1];
   const currentStep = currentRendered ? stepMap[stepKey(currentRendered.id)] : undefined;
 
-  const finish = (finalRendered = renderedSteps) => {
-    handleEnd?.(createEndPayload(finalRendered, values));
+  const finish = (finalRendered: RenderedStep[], finalValues: unknown[]) => {
+    handleEnd?.(createEndPayload(finalRendered, finalValues));
   };
 
-  const goTo = (id: StepId | undefined, value?: unknown) => {
+  const appendRendered = (entry: RenderedStep) => {
+    const merged = [...renderedSteps, entry];
+    setRenderedSteps(merged);
+    return merged;
+  };
+
+  const replaceRendered = (nextRendered: RenderedStep[]) => {
+    setRenderedSteps(nextRendered);
+    return nextRendered;
+  };
+
+  const goTo = (id: StepId | undefined, value?: unknown, state?: { rendered: RenderedStep[]; values: unknown[] }) => {
+    const baseRendered = state?.rendered ?? renderedSteps;
+    const baseValues = state?.values ?? values;
+    const baseMap = toRenderedMap(baseRendered);
+
     if (id === undefined) {
-      finish();
+      finish(baseRendered, baseValues);
       return;
     }
 
@@ -95,39 +100,31 @@ export default function ChatBot(props: ChatBotProps) {
     if (!next) return;
 
     if (isUpdateStep(next)) {
-      setRenderedSteps((prev) => applyUpdateStep(prev, next.update));
-      const updateNextId = nextStepId(next, { value, steps: renderedById });
-      goTo(updateNextId, value);
+      const updated = applyUpdateStep(baseRendered, next.update);
+      replaceRendered(updated);
+      goTo(nextStepId(next, { value, steps: toRenderedMap(updated) }), value, { rendered: updated, values: baseValues });
       return;
     }
 
-    const rendered = toRendered(next, renderedById, value);
+    const rendered = toRendered(next, baseMap, value);
     const delay = resolveStepDelay(next, { botDelay, userDelay, customDelay });
 
     setTimeout(() => {
-      setRenderedSteps((prev) => {
-        const merged = [...prev, rendered];
+      const merged = [...baseRendered, rendered];
+      setRenderedSteps(merged);
 
-        if (isCustomStep(next) && !next.waitAction) {
-          const resolved = nextStepId(next, { value, steps: renderedById });
-          if (resolved === undefined || next.end) {
-            finish(merged);
-          } else {
-            goTo(resolved, value);
-          }
-        }
+      const nextId = nextStepId(next, { value, steps: toRenderedMap(merged) });
 
-        if (!isUserStep(next) && !isOptionsStep(next) && !isCustomStep(next)) {
-          const resolvedNext = nextStepId(next, { value, steps: renderedById });
-          if (next.end || resolvedNext === undefined) {
-            finish(merged);
-          } else {
-            goTo(resolvedNext, value);
-          }
-        }
+      if (isUserStep(next) || isOptionsStep(next)) return;
 
-        return merged;
-      });
+      if (isCustomStep(next) && next.waitAction) return;
+
+      if (next.end || nextId === undefined) {
+        finish(merged, baseValues);
+        return;
+      }
+
+      goTo(nextId, value, { rendered: merged, values: baseValues });
     }, delay);
   };
 
@@ -136,31 +133,39 @@ export default function ChatBot(props: ChatBotProps) {
 
     const validation = currentStep.validator?.(input);
     if (validation !== undefined && validation !== true) {
+      if (typeof validation === 'string') {
+        appendRendered({ id: `${String(currentStep.id)}-validation`, message: validation });
+      }
       return;
     }
 
-    const userEcho: RenderedStep = { id: `${currentStep.id}-value`, message: input, value: input };
-    const nextId = nextStepId(currentStep, { value: input, steps: renderedById });
+    const nextValues = [...values, input];
+    setValues(nextValues);
 
-    setValues((prev) => [...prev, input]);
-    setRenderedSteps((prev) => [...prev, userEcho]);
-    goTo(nextId, input);
+    const userEcho: RenderedStep = { id: `${currentStep.id}-value`, message: input, value: input };
+    const merged = appendRendered(userEcho);
+    const nextId = nextStepId(currentStep, { value: input, steps: toRenderedMap(merged) });
+    goTo(nextId, input, { rendered: merged, values: nextValues });
   };
 
   const handleOptionSelect = (value: unknown, trigger: StepId, label: string) => {
-    setValues((prev) => [...prev, value]);
+    const nextValues = [...values, value];
+    setValues(nextValues);
+
     const userEcho: RenderedStep = { id: `${String(trigger)}-option-value`, message: label, value };
-    setRenderedSteps((prev) => [...prev, userEcho]);
-    goTo(trigger, value);
+    const merged = appendRendered(userEcho);
+    goTo(trigger, value, { rendered: merged, values: nextValues });
   };
 
   const triggerNextStep = ({ value, trigger }: { value?: unknown; trigger?: StepId } = {}) => {
+    const nextValues = value !== undefined ? [...values, value] : values;
+    if (value !== undefined) setValues(nextValues);
+
     const derived = trigger ?? (currentStep ? nextStepId(currentStep, { value, steps: renderedById }) : undefined);
-    if (value !== undefined) {
-      setValues((prev) => [...prev, value]);
-    }
-    goTo(derived, value);
+    goTo(derived, value, { rendered: renderedSteps, values: nextValues });
   };
+
+  const currentInputAttributes = currentStep && isUserStep(currentStep) ? currentStep.inputAttributes : undefined;
 
   return (
     <View style={[styles.container, style]}>
@@ -181,7 +186,7 @@ export default function ChatBot(props: ChatBotProps) {
                 userBubbleColor={userBubbleColor}
                 botFontColor={botFontColor}
                 userFontColor={userFontColor}
-                avatarUri={isUser ? userAvatar : (isTextStep(fullStep as Step) ? (fullStep as any).avatar ?? botAvatar : botAvatar)}
+                avatarUri={isUser ? userAvatar : isTextStep(fullStep as Step) ? (fullStep as any).avatar ?? botAvatar : botAvatar}
                 hideAvatar={isUser ? hideUserAvatar : false}
                 avatarStyle={avatarStyle}
                 avatarWrapperStyle={avatarWrapperStyle}
@@ -223,9 +228,7 @@ export default function ChatBot(props: ChatBotProps) {
               );
             }
 
-            if (!shouldRenderCustomStep(fullStep, idx, renderedSteps.length)) {
-              return null;
-            }
+            if (!shouldRenderCustomStep(fullStep, idx, renderedSteps.length)) return null;
 
             return <View key={`${String(step.id)}-${idx}`}>{enhanced}</View>;
           }
@@ -242,6 +245,7 @@ export default function ChatBot(props: ChatBotProps) {
           submitButtonStyle={submitButtonStyle}
           submitButtonContent={submitButtonContent}
           footerStyle={footerStyle}
+          inputAttributes={currentInputAttributes as Record<string, unknown>}
         />
       ) : null}
     </View>
