@@ -8,6 +8,7 @@ import { Options } from './components/Options';
 import { createStepMap, isCustomStep, isOptionsStep, isTextStep, isUpdateStep, isUserStep, stepKey } from './engine/stepResolver';
 import { nextStepId } from './engine/triggerResolver';
 import { resolveStepDelay } from './engine/delayResolver';
+import { applyUpdateStep, createEndPayload, toRenderedMap } from './engine/runtimeState';
 
 function toRendered(step: Step, steps: Record<string, RenderedStep>, previousValue?: unknown): RenderedStep {
   if (isTextStep(step)) {
@@ -74,22 +75,13 @@ export default function ChatBot(props: ChatBotProps) {
 
   const [values, setValues] = useState<unknown[]>([]);
 
-  const renderedById = useMemo(() => {
-    return renderedSteps.reduce<Record<string, RenderedStep>>((acc, s) => {
-      acc[stepKey(s.id)] = s;
-      return acc;
-    }, {});
-  }, [renderedSteps]);
+  const renderedById = useMemo(() => toRenderedMap(renderedSteps), [renderedSteps]);
 
   const currentRendered = renderedSteps[renderedSteps.length - 1];
   const currentStep = currentRendered ? stepMap[stepKey(currentRendered.id)] : undefined;
 
   const finish = (finalRendered = renderedSteps) => {
-    const byId = finalRendered.reduce<Record<string, RenderedStep>>((acc, s) => {
-      acc[stepKey(s.id)] = s;
-      return acc;
-    }, {});
-    handleEnd?.({ renderedSteps: finalRendered, steps: byId, values });
+    handleEnd?.(createEndPayload(finalRendered, values));
   };
 
   const goTo = (id: StepId | undefined, value?: unknown) => {
@@ -102,8 +94,7 @@ export default function ChatBot(props: ChatBotProps) {
     if (!next) return;
 
     if (isUpdateStep(next)) {
-      const targetKey = stepKey(next.update);
-      setRenderedSteps((prev) => prev.filter((s) => stepKey(s.id) !== targetKey));
+      setRenderedSteps((prev) => applyUpdateStep(prev, next.update));
       const updateNextId = nextStepId(next, { value, steps: renderedById });
       goTo(updateNextId, value);
       return;
