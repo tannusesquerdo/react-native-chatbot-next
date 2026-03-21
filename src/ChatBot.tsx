@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { cloneElement, useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import type { ChatBotProps } from './types/props';
 import type { RenderedStep, Step, StepId } from './types/steps';
@@ -38,6 +38,11 @@ export default function ChatBot(props: ChatBotProps) {
     placeholder,
     bubbleStyle,
     userBubbleStyle,
+    avatarStyle,
+    avatarWrapperStyle,
+    botAvatar,
+    userAvatar,
+    hideUserAvatar,
     botBubbleColor,
     userBubbleColor,
     botFontColor,
@@ -52,6 +57,9 @@ export default function ChatBot(props: ChatBotProps) {
     submitButtonContent,
     submitButtonStyle,
     scrollViewProps,
+    botDelay = 1000,
+    userDelay = 1000,
+    customDelay = 1000,
   } = props;
 
   const stepMap = useMemo(() => createStepMap(steps), [steps]);
@@ -75,9 +83,17 @@ export default function ChatBot(props: ChatBotProps) {
   const currentRendered = renderedSteps[renderedSteps.length - 1];
   const currentStep = currentRendered ? stepMap[stepKey(currentRendered.id)] : undefined;
 
+  const finish = (finalRendered = renderedSteps) => {
+    const byId = finalRendered.reduce<Record<string, RenderedStep>>((acc, s) => {
+      acc[stepKey(s.id)] = s;
+      return acc;
+    }, {});
+    handleEnd?.({ renderedSteps: finalRendered, steps: byId, values });
+  };
+
   const goTo = (id: StepId | undefined, value?: unknown) => {
     if (id === undefined) {
-      handleEnd?.({ renderedSteps, steps: renderedById, values });
+      finish();
       return;
     }
 
@@ -93,14 +109,33 @@ export default function ChatBot(props: ChatBotProps) {
     }
 
     const rendered = toRendered(next, renderedById, value);
-    setRenderedSteps((prev) => [...prev, rendered]);
+    const delay = isTextStep(next) ? (next.delay ?? botDelay) : isCustomStep(next) ? (next.delay ?? customDelay) : userDelay;
 
-    if (!isUserStep(next) && !isOptionsStep(next) && !isCustomStep(next)) {
-      const resolvedNext = nextStepId(next, { value, steps: renderedById });
-      if (next.end || resolvedNext === undefined) {
-        handleEnd?.({ renderedSteps: [...renderedSteps, rendered], steps: { ...renderedById, [stepKey(rendered.id)]: rendered }, values });
-      }
-    }
+    setTimeout(() => {
+      setRenderedSteps((prev) => {
+        const merged = [...prev, rendered];
+
+        if (isCustomStep(next) && !next.waitAction) {
+          const resolved = nextStepId(next, { value, steps: renderedById });
+          if (resolved === undefined || next.end) {
+            finish(merged);
+          } else {
+            goTo(resolved, value);
+          }
+        }
+
+        if (!isUserStep(next) && !isOptionsStep(next) && !isCustomStep(next)) {
+          const resolvedNext = nextStepId(next, { value, steps: renderedById });
+          if (next.end || resolvedNext === undefined) {
+            finish(merged);
+          } else {
+            goTo(resolvedNext, value);
+          }
+        }
+
+        return merged;
+      });
+    }, delay);
   };
 
   const handleUserSubmit = (input: string) => {
@@ -119,11 +154,19 @@ export default function ChatBot(props: ChatBotProps) {
     goTo(nextId, input);
   };
 
-  const handleOptionSelect = (value: unknown, trigger: StepId) => {
+  const handleOptionSelect = (value: unknown, trigger: StepId, label: string) => {
     setValues((prev) => [...prev, value]);
-    const userEcho: RenderedStep = { id: `${String(trigger)}-option-value`, message: String(value), value };
+    const userEcho: RenderedStep = { id: `${String(trigger)}-option-value`, message: label, value };
     setRenderedSteps((prev) => [...prev, userEcho]);
     goTo(trigger, value);
+  };
+
+  const triggerNextStep = ({ value, trigger }: { value?: unknown; trigger?: StepId } = {}) => {
+    const derived = trigger ?? (currentStep ? nextStepId(currentStep, { value, steps: renderedById }) : undefined);
+    if (value !== undefined) {
+      setValues((prev) => [...prev, value]);
+    }
+    goTo(derived, value);
   };
 
   return (
@@ -131,6 +174,8 @@ export default function ChatBot(props: ChatBotProps) {
       {headerComponent}
       <ScrollView style={[styles.content, contentStyle]} {...(scrollViewProps as object)}>
         {renderedSteps.map((step, idx) => {
+          const fullStep = stepMap[stepKey(step.id)];
+
           if (step.message) {
             const isUser = String(step.id).includes('-value');
             return (
@@ -143,6 +188,10 @@ export default function ChatBot(props: ChatBotProps) {
                 userBubbleColor={userBubbleColor}
                 botFontColor={botFontColor}
                 userFontColor={userFontColor}
+                avatarUri={isUser ? userAvatar : (isTextStep(fullStep as Step) ? (fullStep as any).avatar ?? botAvatar : botAvatar)}
+                hideAvatar={isUser ? hideUserAvatar : false}
+                avatarStyle={avatarStyle}
+                avatarWrapperStyle={avatarWrapperStyle}
               />
             );
           }
@@ -152,7 +201,7 @@ export default function ChatBot(props: ChatBotProps) {
               <Options
                 key={`${String(step.id)}-${idx}`}
                 options={step.options}
-                onSelect={(option) => handleOptionSelect(option.value, option.trigger)}
+                onSelect={(option) => handleOptionSelect(option.value, option.trigger, option.label)}
                 optionStyle={optionStyle}
                 optionElementStyle={optionElementStyle}
                 optionFontColor={optionFontColor}
@@ -162,7 +211,30 @@ export default function ChatBot(props: ChatBotProps) {
           }
 
           if (step.component) {
-            return <View key={`${String(step.id)}-${idx}`}>{step.component}</View>;
+            const isCustom = fullStep && isCustomStep(fullStep);
+            const previousStep = idx > 0 ? renderedSteps[idx - 1] : undefined;
+            const enhanced = React.isValidElement(step.component)
+              ? cloneElement(step.component, {
+                  step,
+                  steps: renderedById,
+                  previousStep,
+                  triggerNextStep,
+                } as Record<string, unknown>)
+              : step.component;
+
+            if (isCustom && fullStep.asMessage) {
+              return (
+                <View key={`${String(step.id)}-${idx}`} style={styles.customAsMessage}>
+                  {enhanced}
+                </View>
+              );
+            }
+
+            if (isCustom && fullStep.replace) {
+              return <React.Fragment key={`${String(step.id)}-${idx}`}>{enhanced}</React.Fragment>;
+            }
+
+            return <View key={`${String(step.id)}-${idx}`}>{enhanced}</View>;
           }
 
           return null;
@@ -190,5 +262,9 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
+  },
+  customAsMessage: {
+    paddingHorizontal: 10,
+    marginVertical: 4,
   },
 });

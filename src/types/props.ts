@@ -15,6 +15,8 @@ export type ChatBotProps = {
   customDelay?: number;
   headerComponent?: ReactElement;
   hideUserAvatar?: boolean;
+  botAvatar?: string;
+  userAvatar?: string;
   botBubbleColor?: string;
   userBubbleColor?: string;
   botFontColor?: string;
@@ -26,6 +28,8 @@ export type ChatBotProps = {
   style?: object;
   bubbleStyle?: object;
   userBubbleStyle?: object;
+  avatarStyle?: object;
+  avatarWrapperStyle?: object;
   optionStyle?: object;
   optionElementStyle?: object;
   optionFontColor?: string;
