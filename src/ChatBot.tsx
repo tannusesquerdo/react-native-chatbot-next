@@ -9,6 +9,7 @@ import { createStepMap, isCustomStep, isOptionsStep, isTextStep, isUpdateStep, i
 import { nextStepId } from './engine/triggerResolver';
 import { resolveStepDelay } from './engine/delayResolver';
 import { applyUpdateStep, createEndPayload, toRenderedMap } from './engine/runtimeState';
+import { shouldRenderCustomStep } from './engine/customStepRules';
 
 function toRendered(step: Step, steps: Record<string, RenderedStep>, previousValue?: unknown): RenderedStep {
   if (isTextStep(step)) {
@@ -222,8 +223,8 @@ export default function ChatBot(props: ChatBotProps) {
               );
             }
 
-            if (isCustom && fullStep.replace) {
-              return <React.Fragment key={`${String(step.id)}-${idx}`}>{enhanced}</React.Fragment>;
+            if (!shouldRenderCustomStep(fullStep, idx, renderedSteps.length)) {
+              return null;
             }
 
             return <View key={`${String(step.id)}-${idx}`}>{enhanced}</View>;
