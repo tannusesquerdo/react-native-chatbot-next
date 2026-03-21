@@ -4,12 +4,15 @@ Modern TypeScript rewrite of `react-native-chatbot` with compatibility-first API
 
 ## Status
 
-Initial implementation started:
+Initial implementation in progress:
 - Typed step schema
-- Trigger engine
+- Trigger engine + delay resolver
 - Core `ChatBot` component
 - User input + options flow
+- Avatar support + hide user avatar
+- Custom step injection (`triggerNextStep`, `step`, `steps`, `previousStep`)
 - Legacy-style customization props (baseline)
+- Unit tests (trigger + delay semantics)
 
 ## Install
 

@@ -7,6 +7,7 @@ import { InputBar } from './components/InputBar';
 import { Options } from './components/Options';
 import { createStepMap, isCustomStep, isOptionsStep, isTextStep, isUpdateStep, isUserStep, stepKey } from './engine/stepResolver';
 import { nextStepId } from './engine/triggerResolver';
+import { resolveStepDelay } from './engine/delayResolver';
 
 function toRendered(step: Step, steps: Record<string, RenderedStep>, previousValue?: unknown): RenderedStep {
   if (isTextStep(step)) {
@@ -109,7 +110,7 @@ export default function ChatBot(props: ChatBotProps) {
     }
 
     const rendered = toRendered(next, renderedById, value);
-    const delay = isTextStep(next) ? (next.delay ?? botDelay) : isCustomStep(next) ? (next.delay ?? customDelay) : userDelay;
+    const delay = resolveStepDelay(next, { botDelay, userDelay, customDelay });
 
     setTimeout(() => {
       setRenderedSteps((prev) => {
