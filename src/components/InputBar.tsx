@@ -37,6 +37,7 @@ export function InputBar({
         value={value}
         onChangeText={setValue}
         onSubmitEditing={handleSend}
+        autoFocus
         {...inputAttributes}
       />
       <Pressable style={[styles.button, submitButtonStyle]} onPress={handleSend}>

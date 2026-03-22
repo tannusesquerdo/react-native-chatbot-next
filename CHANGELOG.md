@@ -13,6 +13,8 @@
 - Auto-scroll to bottom on new messages.
 - Message insertion animation via LayoutAnimation.
 - Options selection now persists selected value on the options step (for `steps[stepId].value` parsing).
+- User input now auto-focuses when user step appears.
+- Improved iOS keyboard handling defaults (`keyboardVerticalOffset=0`, `keyboardShouldPersistTaps`).
 - Test suite for trigger, delay, runtime state, and conversation simulation.
 
 ### Notes

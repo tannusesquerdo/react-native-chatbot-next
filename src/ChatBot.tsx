@@ -55,7 +55,7 @@ export default function ChatBot(props: ChatBotProps) {
     submitButtonContent,
     submitButtonStyle,
     scrollViewProps,
-    keyboardVerticalOffset = Platform.OS === 'ios' ? 44 : 0,
+    keyboardVerticalOffset = 0,
     animationMode = 'layout',
     showBotTyping = true,
     minTypingMs = 350,
@@ -268,6 +268,7 @@ export default function ChatBot(props: ChatBotProps) {
       <ScrollView
         ref={scrollRef}
         style={[styles.content, contentStyle]}
+        keyboardShouldPersistTaps="handled"
         onContentSizeChange={() => scrollRef.current?.scrollToEnd({ animated: true })}
         {...(scrollViewProps as object)}
       >
