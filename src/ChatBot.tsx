@@ -5,6 +5,7 @@ import type { RenderedStep, Step, StepId } from './types/steps';
 import { Bubble } from './components/Bubble';
 import { InputBar } from './components/InputBar';
 import { Options } from './components/Options';
+import { AnimatedMessage } from './components/AnimatedMessage';
 import { createStepMap, isCustomStep, isOptionsStep, isTextStep, isUpdateStep, isUserStep, stepKey } from './engine/stepResolver';
 import { nextStepId } from './engine/triggerResolver';
 import { resolveStepDelay } from './engine/delayResolver';
@@ -54,6 +55,7 @@ export default function ChatBot(props: ChatBotProps) {
     submitButtonStyle,
     scrollViewProps,
     keyboardVerticalOffset = Platform.OS === 'ios' ? 44 : 0,
+    animationMode = 'layout',
     botDelay = 1000,
     userDelay = 1000,
     customDelay = 1000,
@@ -79,6 +81,7 @@ export default function ChatBot(props: ChatBotProps) {
   };
 
   const animateNext = () => {
+    if (animationMode !== 'layout') return;
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
   };
 
@@ -188,10 +191,11 @@ export default function ChatBot(props: ChatBotProps) {
   const currentInputAttributes = currentStep && isUserStep(currentStep) ? currentStep.inputAttributes : undefined;
 
   useEffect(() => {
+    if (animationMode !== 'layout') return;
     if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
       UIManager.setLayoutAnimationEnabledExperimental(true);
     }
-  }, []);
+  }, [animationMode]);
 
   useEffect(() => {
     if (!steps.length) return;
@@ -229,34 +233,36 @@ export default function ChatBot(props: ChatBotProps) {
           if (step.message) {
             const isUser = String(step.id).includes('-value');
             return (
-              <Bubble
-                key={`${String(step.id)}-${idx}`}
-                text={step.message}
-                isUser={isUser}
-                style={isUser ? userBubbleStyle : bubbleStyle}
-                botBubbleColor={botBubbleColor}
-                userBubbleColor={userBubbleColor}
-                botFontColor={botFontColor}
-                userFontColor={userFontColor}
-                avatarUri={isUser ? userAvatar : isTextStep(fullStep as Step) ? (fullStep as any).avatar ?? botAvatar : botAvatar}
-                hideAvatar={isUser ? hideUserAvatar : false}
-                avatarStyle={avatarStyle}
-                avatarWrapperStyle={avatarWrapperStyle}
-              />
+              <AnimatedMessage key={`${String(step.id)}-${idx}`} mode={animationMode}>
+                <Bubble
+                  text={step.message}
+                  isUser={isUser}
+                  style={isUser ? userBubbleStyle : bubbleStyle}
+                  botBubbleColor={botBubbleColor}
+                  userBubbleColor={userBubbleColor}
+                  botFontColor={botFontColor}
+                  userFontColor={userFontColor}
+                  avatarUri={isUser ? userAvatar : isTextStep(fullStep as Step) ? (fullStep as any).avatar ?? botAvatar : botAvatar}
+                  hideAvatar={isUser ? hideUserAvatar : false}
+                  avatarStyle={avatarStyle}
+                  avatarWrapperStyle={avatarWrapperStyle}
+                />
+              </AnimatedMessage>
             );
           }
 
           if (step.options) {
             return (
-              <Options
-                key={`${String(step.id)}-${idx}`}
-                options={step.options}
-                onSelect={(option) => handleOptionSelect(option.value, option.trigger, option.label)}
-                optionStyle={optionStyle}
-                optionElementStyle={optionElementStyle}
-                optionFontColor={optionFontColor}
-                optionBubbleColor={optionBubbleColor}
-              />
+              <AnimatedMessage key={`${String(step.id)}-${idx}`} mode={animationMode}>
+                <Options
+                  options={step.options}
+                  onSelect={(option) => handleOptionSelect(option.value, option.trigger, option.label)}
+                  optionStyle={optionStyle}
+                  optionElementStyle={optionElementStyle}
+                  optionFontColor={optionFontColor}
+                  optionBubbleColor={optionBubbleColor}
+                />
+              </AnimatedMessage>
             );
           }
 
@@ -274,15 +280,19 @@ export default function ChatBot(props: ChatBotProps) {
 
             if (isCustom && fullStep.asMessage) {
               return (
-                <View key={`${String(step.id)}-${idx}`} style={[styles.customAsMessage, customStyle]}>
-                  {enhanced}
-                </View>
+                <AnimatedMessage key={`${String(step.id)}-${idx}`} mode={animationMode}>
+                  <View style={[styles.customAsMessage, customStyle]}>{enhanced}</View>
+                </AnimatedMessage>
               );
             }
 
             if (!shouldRenderCustomStep(fullStep, idx, renderedSteps.length)) return null;
 
-            return <View key={`${String(step.id)}-${idx}`} style={customStyle}>{enhanced}</View>;
+            return (
+              <AnimatedMessage key={`${String(step.id)}-${idx}`} mode={animationMode}>
+                <View style={customStyle}>{enhanced}</View>
+              </AnimatedMessage>
+            );
           }
 
           return null;

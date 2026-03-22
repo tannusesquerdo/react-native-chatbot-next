@@ -13,6 +13,7 @@ Initial implementation in progress:
 - Custom step injection (`triggerNextStep`, `step`, `steps`, `previousStep`)
 - Legacy-style customization props (baseline)
 - Keyboard avoidance support (`keyboardVerticalOffset`) + custom step styling (`customStyle`)
+- Animation mode support: `animationMode = 'layout' | 'reanimated' | 'none'`
 - Unit tests (trigger + delay + runtime + waitAction semantics)
 
 ## Install
@@ -44,6 +45,16 @@ export function App() {
 2. Tighten custom-step `replace` parity for nested/branch flows
 3. Snapshot parity against original default styles
 4. Publish `0.1.x` beta and validate against real legacy examples
+
+## Reanimated mode (optional)
+
+To use `animationMode="reanimated"`, install and configure React Native Reanimated in your app:
+
+```bash
+npm i react-native-reanimated
+```
+
+Then follow Reanimated setup (Babel plugin + platform setup) in the official docs.
 
 ## Docs
 
