@@ -14,6 +14,7 @@ describe('simulateFlow', () => {
 
     expect(out.renderedSteps.map((s) => String(s.id))).toEqual(['0', '1', '1-value', '2']);
     expect(out.values).toEqual(['Tannus']);
+    expect(out.steps['1']?.value).toBe('Tannus');
     expect(out.steps['2']?.message).toBe('Hi Tannus');
     expect(out.elapsedMs).toBe(25);
   });
@@ -39,6 +40,17 @@ describe('simulateFlow', () => {
     const out = simulateFlow(steps, [{ kind: 'option', value: 'b' }], { botDelay: 1, userDelay: 1, customDelay: 1 });
     expect(out.steps['q']?.value).toBe('b');
     expect(out.steps['r']?.message).toBe('selected-b');
+  });
+
+  it('makes typed value available in next message via original user step', () => {
+    const steps: Step[] = [
+      { id: 'name', user: true, metadata: { key: 'name' }, trigger: 'r' },
+      { id: 'r', message: ({ steps }) => `name-${String(steps.name?.value)}`, end: true },
+    ];
+
+    const out = simulateFlow(steps, [{ kind: 'user', value: 'Tannus' }], { botDelay: 1, userDelay: 1, customDelay: 1 });
+    expect(out.steps['name']?.value).toBe('Tannus');
+    expect(out.steps['r']?.message).toBe('name-Tannus');
   });
 
   it('applies update step by removing target rendered steps', () => {

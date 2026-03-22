@@ -27,6 +27,18 @@ export const parityFixtures: FlowFixture[] = [
     },
   },
   {
+    name: 'typed value available on original user step for templating',
+    steps: [
+      { id: 'name', user: true, metadata: { key: 'name' }, trigger: 'r' },
+      { id: 'r', message: ({ steps }) => `name:${String(steps.name?.value)}`, end: true },
+    ],
+    inputs: [{ kind: 'user', value: 'Tannus' }],
+    expected: {
+      renderedIds: ['name', 'name-value', 'r'],
+      values: ['Tannus'],
+    },
+  },
+  {
     name: 'options -> echo label -> next',
     steps: [
       {

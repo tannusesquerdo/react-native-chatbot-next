@@ -65,6 +65,7 @@ export function simulateFlow(steps: Step[], inputs: FlowInput[], cfg: SimulateCo
       const valid = step.validator?.(input.value);
       if (valid !== undefined && valid !== true) return;
       values = [...values, input.value];
+      rendered = rendered.map((r) => (String(r.id) === String(step.id) ? { ...r, value: input.value } : r));
       rendered = [...rendered, { id: `${step.id}-value`, message: input.value, value: input.value }];
       goTo(nextStepId(step, { value: input.value, steps: toRenderedMap(rendered) }), input.value);
       return;

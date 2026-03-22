@@ -194,8 +194,17 @@ export default function ChatBot(props: ChatBotProps) {
     valuesRef.current = nextValues;
     setValues(nextValues);
 
+    const currentId = String(currentStep.id);
+    const withUserValue = renderedRef.current.map((entry) => (String(entry.id) === currentId ? { ...entry, value: input } : entry));
+    renderedRef.current = withUserValue;
+    setRenderedSteps(withUserValue);
+
     const userEcho: RenderedStep = { id: `${currentStep.id}-value`, message: input, value: input };
-    const merged = appendRendered(userEcho);
+    const merged = [...withUserValue, userEcho];
+    animateNext();
+    renderedRef.current = merged;
+    setRenderedSteps(merged);
+
     const nextId = nextStepId(currentStep, { value: input, steps: toRenderedMap(merged) });
     goTo(nextId, input, { rendered: merged, values: nextValues });
   };
