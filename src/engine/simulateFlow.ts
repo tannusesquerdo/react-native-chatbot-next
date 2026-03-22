@@ -76,7 +76,8 @@ export function simulateFlow(steps: Step[], inputs: FlowInput[], cfg: SimulateCo
       const opt = step.options.find((o) => o.value === input.value);
       if (!opt) return;
       values = [...values, opt.value];
-      rendered = [...rendered, { id: `${String(opt.trigger)}-option-value`, message: opt.label, value: opt.value }];
+      rendered = rendered.map((r) => (String(r.id) === String(step.id) ? { ...r, value: opt.value, metadata: { ...(r.metadata ?? {}), selectedLabel: opt.label } } : r));
+      rendered = [...rendered, { id: `${String(step.id)}-value`, message: opt.label, value: opt.value }];
       goTo(opt.trigger, opt.value);
       return;
     }

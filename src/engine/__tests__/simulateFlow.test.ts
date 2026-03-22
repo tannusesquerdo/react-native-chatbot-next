@@ -27,6 +27,7 @@ describe('simulateFlow', () => {
     const out = simulateFlow(steps, [{ kind: 'option', value: 'yes' }], { botDelay: 10, userDelay: 5, customDelay: 1 });
     expect(out.values).toEqual(['yes']);
     expect(out.renderedSteps.some((s) => s.message === 'Yes')).toBe(true);
+    expect(out.steps['0']?.value).toBe('yes');
   });
 
   it('applies update step by removing target rendered steps', () => {

@@ -40,7 +40,7 @@ export const parityFixtures: FlowFixture[] = [
     ],
     inputs: [{ kind: 'option', value: 2 }],
     expected: {
-      renderedIds: ['0', '1-option-value', '1'],
+      renderedIds: ['0', '0-value', '1'],
       values: [2],
     },
   },

@@ -1,5 +1,5 @@
 import React, { cloneElement, useEffect, useMemo, useRef, useState } from 'react';
-import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from 'react-native';
+import { KeyboardAvoidingView, LayoutAnimation, Platform, ScrollView, StyleSheet, UIManager, View } from 'react-native';
 import type { ChatBotProps } from './types/props';
 import type { RenderedStep, Step, StepId } from './types/steps';
 import { Bubble } from './components/Bubble';
@@ -78,13 +78,19 @@ export default function ChatBot(props: ChatBotProps) {
     handleEnd?.(createEndPayload(finalRendered, finalValues));
   };
 
+  const animateNext = () => {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+  };
+
   const appendRendered = (entry: RenderedStep) => {
     const merged = [...renderedSteps, entry];
+    animateNext();
     setRenderedSteps(merged);
     return merged;
   };
 
   const replaceRendered = (nextRendered: RenderedStep[]) => {
+    animateNext();
     setRenderedSteps(nextRendered);
     return nextRendered;
   };
@@ -114,6 +120,7 @@ export default function ChatBot(props: ChatBotProps) {
 
     setTimeout(() => {
       const merged = [...baseRendered, rendered];
+      animateNext();
       setRenderedSteps(merged);
 
       const nextId = nextStepId(next, { value, steps: toRenderedMap(merged) });
@@ -152,11 +159,21 @@ export default function ChatBot(props: ChatBotProps) {
   };
 
   const handleOptionSelect = (value: unknown, trigger: StepId, label: string) => {
+    if (!currentStep || !isOptionsStep(currentStep)) return;
+
     const nextValues = [...values, value];
     setValues(nextValues);
 
-    const userEcho: RenderedStep = { id: `${String(trigger)}-option-value`, message: label, value };
-    const merged = appendRendered(userEcho);
+    const optionsStepId = String(currentStep.id);
+    const withSelected = renderedSteps.map((entry) =>
+      String(entry.id) === optionsStepId ? { ...entry, value, metadata: { ...(entry.metadata ?? {}), selectedLabel: label } } : entry,
+    );
+
+    const userEcho: RenderedStep = { id: `${optionsStepId}-value`, message: label, value };
+    const merged = [...withSelected, userEcho];
+    animateNext();
+    setRenderedSteps(merged);
+
     goTo(trigger, value, { rendered: merged, values: nextValues });
   };
 
@@ -169,6 +186,12 @@ export default function ChatBot(props: ChatBotProps) {
   };
 
   const currentInputAttributes = currentStep && isUserStep(currentStep) ? currentStep.inputAttributes : undefined;
+
+  useEffect(() => {
+    if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
+      UIManager.setLayoutAnimationEnabledExperimental(true);
+    }
+  }, []);
 
   useEffect(() => {
     if (!steps.length) return;
