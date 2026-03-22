@@ -226,6 +226,13 @@ export default function ChatBot(props: ChatBotProps) {
     if (value !== undefined) {
       valuesRef.current = nextValues;
       setValues(nextValues);
+
+      if (currentStep) {
+        const currentId = String(currentStep.id);
+        const persisted = renderedRef.current.map((entry) => (String(entry.id) === currentId ? { ...entry, value } : entry));
+        renderedRef.current = persisted;
+        setRenderedSteps(persisted);
+      }
     }
 
     const derived = trigger ?? (currentStep ? nextStepId(currentStep, { value, steps: renderedById }) : undefined);

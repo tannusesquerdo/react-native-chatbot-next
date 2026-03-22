@@ -35,6 +35,7 @@ describe('simulateFlow waitAction/custom trigger semantics', () => {
 
     const out = simulateFlow(steps, [{ kind: 'custom', value: 42, trigger: '2' }], { botDelay: 1, userDelay: 1, customDelay: 1 });
     expect(out.renderedSteps.map((s) => String(s.id))).toEqual(['0', '2']);
+    expect(out.steps['0']?.value).toBe(42);
     expect(out.steps['2']?.message).toBe('override-42');
     expect(out.values).toEqual([42]);
   });

@@ -86,7 +86,10 @@ export function simulateFlow(steps: Step[], inputs: FlowInput[], cfg: SimulateCo
       if (step.waitAction) {
         const input = inputs[inputCursor++];
         if (!input || input.kind !== 'custom') return;
-        if (input.value !== undefined) values = [...values, input.value];
+        if (input.value !== undefined) {
+          values = [...values, input.value];
+          rendered = rendered.map((r) => (String(r.id) === String(step.id) ? { ...r, value: input.value } : r));
+        }
         const next = input.trigger ?? nextStepId(step, { value: input.value, steps: toRenderedMap(rendered) });
         goTo(next, input.value);
         return;
