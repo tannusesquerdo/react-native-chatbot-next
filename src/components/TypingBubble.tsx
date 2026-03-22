@@ -45,7 +45,7 @@ export function TypingBubble({ botBubbleColor = '#6E48AA', avatarUri, avatarStyl
 
 const styles = StyleSheet.create({
   wrapper: {
-    marginVertical: 4,
+    marginVertical: 3,
     width: '100%',
     paddingHorizontal: 10,
   },

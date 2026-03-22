@@ -15,6 +15,7 @@ Initial implementation in progress:
 - Keyboard avoidance support (`keyboardVerticalOffset`) + custom step styling (`customStyle`)
 - Animation mode support: `animationMode = 'layout' | 'reanimated' | 'none'`
 - Bot typing indicator bubble before delayed bot text (`showBotTyping`, default `true`)
+- Typing/pacing controls: `minTypingMs`, `maxTypingMs`, `botMessageGapMs`
 - Unit tests (trigger + delay + runtime + waitAction semantics)
 
 ## Install

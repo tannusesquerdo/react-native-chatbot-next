@@ -20,6 +20,9 @@ export type ChatBotProps = {
   keyboardVerticalOffset?: number;
   animationMode?: 'none' | 'layout' | 'reanimated';
   showBotTyping?: boolean;
+  minTypingMs?: number;
+  maxTypingMs?: number;
+  botMessageGapMs?: number;
   botBubbleColor?: string;
   userBubbleColor?: string;
   botFontColor?: string;

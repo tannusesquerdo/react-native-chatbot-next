@@ -47,7 +47,7 @@ export function Bubble({
 
 const styles = StyleSheet.create({
   wrapper: {
-    marginVertical: 4,
+    marginVertical: 3,
     width: '100%',
     paddingHorizontal: 10,
   },

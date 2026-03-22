@@ -58,6 +58,9 @@ export default function ChatBot(props: ChatBotProps) {
     keyboardVerticalOffset = Platform.OS === 'ios' ? 44 : 0,
     animationMode = 'layout',
     showBotTyping = true,
+    minTypingMs = 350,
+    maxTypingMs = 1400,
+    botMessageGapMs = 120,
     botDelay = 1000,
     userDelay = 1000,
     customDelay = 1000,
@@ -136,9 +139,13 @@ export default function ChatBot(props: ChatBotProps) {
     const rendered = toRendered(next, baseMap, value);
     const delay = resolveStepDelay(next, { botDelay, userDelay, customDelay });
 
-    const shouldShowTyping = showBotTyping && isTextStep(next) && delay > 0;
+    const isBotText = isTextStep(next);
+    const shouldShowTyping = showBotTyping && isBotText && delay > 0;
     const typingId = shouldShowTyping ? `${String(next.id)}-typing-${Date.now()}` : null;
     const withTyping = shouldShowTyping ? [...baseRendered, { id: typingId!, typing: true } as RenderedStep] : baseRendered;
+
+    const targetTypingMs = Math.max(minTypingMs, Math.min(maxTypingMs, delay));
+    const revealDelay = shouldShowTyping ? targetTypingMs : delay;
 
     if (shouldShowTyping) {
       animateNext();
@@ -164,8 +171,12 @@ export default function ChatBot(props: ChatBotProps) {
         return;
       }
 
-      goTo(nextId, value, { rendered: merged, values: baseValues });
-    }, delay);
+      if (isBotText && botMessageGapMs > 0) {
+        setTimeout(() => goTo(nextId, value, { rendered: merged, values: baseValues }), botMessageGapMs);
+      } else {
+        goTo(nextId, value, { rendered: merged, values: baseValues });
+      }
+    }, revealDelay);
   };
 
   const handleUserSubmit = (input: string) => {
