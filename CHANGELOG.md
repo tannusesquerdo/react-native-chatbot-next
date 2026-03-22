@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.0-beta.10
+
+### Fixed
+- Hardened all step type guards against `null`/`undefined`/non-object values to prevent `"Cannot use 'in' operator"` crashes.
+- Validation-message rendering now safely coexists with input steps: validation errors show while the input remains active.
+
 ## 0.1.0-beta.9
 
 ### Fixed
