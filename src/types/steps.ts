@@ -66,5 +66,6 @@ export type RenderedStep = {
   component?: ReactNode;
   options?: OptionItem[];
   user?: boolean;
+  typing?: boolean;
   metadata?: Record<string, unknown>;
 };

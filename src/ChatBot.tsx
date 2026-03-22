@@ -6,6 +6,7 @@ import { Bubble } from './components/Bubble';
 import { InputBar } from './components/InputBar';
 import { Options } from './components/Options';
 import { AnimatedMessage } from './components/AnimatedMessage';
+import { TypingBubble } from './components/TypingBubble';
 import { createStepMap, isCustomStep, isOptionsStep, isTextStep, isUpdateStep, isUserStep, stepKey } from './engine/stepResolver';
 import { nextStepId } from './engine/triggerResolver';
 import { resolveStepDelay } from './engine/delayResolver';
@@ -56,6 +57,7 @@ export default function ChatBot(props: ChatBotProps) {
     scrollViewProps,
     keyboardVerticalOffset = Platform.OS === 'ios' ? 44 : 0,
     animationMode = 'layout',
+    showBotTyping = true,
     botDelay = 1000,
     userDelay = 1000,
     customDelay = 1000,
@@ -121,8 +123,18 @@ export default function ChatBot(props: ChatBotProps) {
     const rendered = toRendered(next, baseMap, value);
     const delay = resolveStepDelay(next, { botDelay, userDelay, customDelay });
 
+    const shouldShowTyping = showBotTyping && isTextStep(next) && delay > 0;
+    const typingId = shouldShowTyping ? `${String(next.id)}-typing-${Date.now()}` : null;
+    const withTyping = shouldShowTyping ? [...baseRendered, { id: typingId!, typing: true } as RenderedStep] : baseRendered;
+
+    if (shouldShowTyping) {
+      animateNext();
+      setRenderedSteps(withTyping);
+    }
+
     setTimeout(() => {
-      const merged = [...baseRendered, rendered];
+      const withoutTyping = shouldShowTyping ? withTyping.filter((s) => String(s.id) !== String(typingId)) : withTyping;
+      const merged = [...withoutTyping, rendered];
       animateNext();
       setRenderedSteps(merged);
 
@@ -229,6 +241,14 @@ export default function ChatBot(props: ChatBotProps) {
       >
         {renderedSteps.map((step, idx) => {
           const fullStep = stepMap[stepKey(step.id)];
+
+          if (step.typing) {
+            return (
+              <AnimatedMessage key={`${String(step.id)}-${idx}`} mode={animationMode}>
+                <TypingBubble botBubbleColor={botBubbleColor} avatarUri={botAvatar} avatarStyle={avatarStyle} avatarWrapperStyle={avatarWrapperStyle} />
+              </AnimatedMessage>
+            );
+          }
 
           if (step.message) {
             const isUser = String(step.id).includes('-value');

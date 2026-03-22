@@ -19,6 +19,7 @@ export type ChatBotProps = {
   userAvatar?: string;
   keyboardVerticalOffset?: number;
   animationMode?: 'none' | 'layout' | 'reanimated';
+  showBotTyping?: boolean;
   botBubbleColor?: string;
   userBubbleColor?: string;
   botFontColor?: string;
