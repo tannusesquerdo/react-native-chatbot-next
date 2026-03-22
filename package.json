@@ -1,6 +1,6 @@
 {
   "name": "@tannus/react-native-chatbot-next",
-  "version": "0.1.0",
+  "version": "0.1.0-beta.9",
   "description": "Modern TypeScript rewrite of react-native-chatbot with API compatibility",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.0-beta.9
+
+### Fixed
+- Active user input step now stays mounted after validator messages (e.g. `*-validation`), so footer/input does not disappear on validation errors.
+
 ## 0.1.0 (in progress)
 
 ### Added
