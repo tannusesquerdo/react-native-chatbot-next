@@ -81,8 +81,13 @@ export default function ChatBot(props: ChatBotProps) {
 
   const renderedById = useMemo(() => toRenderedMap(renderedSteps), [renderedSteps]);
   const scrollRef = useRef<ScrollView>(null);
-  const currentRendered = renderedSteps[renderedSteps.length - 1];
-  const currentStep = currentRendered ? stepMap[stepKey(currentRendered.id)] : undefined;
+  const currentStep = useMemo(() => {
+    for (let i = renderedSteps.length - 1; i >= 0; i -= 1) {
+      const resolved = stepMap[stepKey(renderedSteps[i].id)];
+      if (resolved) return resolved;
+    }
+    return undefined;
+  }, [renderedSteps, stepMap]);
 
   useEffect(() => {
     renderedRef.current = renderedSteps;
