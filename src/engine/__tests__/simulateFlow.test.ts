@@ -30,6 +30,17 @@ describe('simulateFlow', () => {
     expect(out.steps['0']?.value).toBe('yes');
   });
 
+  it('makes selected option value available in next message via steps map', () => {
+    const steps: Step[] = [
+      { id: 'q', options: [{ label: 'A', value: 'a', trigger: 'r' }, { label: 'B', value: 'b', trigger: 'r' }] },
+      { id: 'r', message: ({ steps }) => `selected-${String(steps.q?.value)}`, end: true },
+    ];
+
+    const out = simulateFlow(steps, [{ kind: 'option', value: 'b' }], { botDelay: 1, userDelay: 1, customDelay: 1 });
+    expect(out.steps['q']?.value).toBe('b');
+    expect(out.steps['r']?.message).toBe('selected-b');
+  });
+
   it('applies update step by removing target rendered steps', () => {
     const steps: Step[] = [
       { id: '0', message: 'A', trigger: '1' },

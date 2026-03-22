@@ -73,10 +73,21 @@ export default function ChatBot(props: ChatBotProps) {
   });
   const [values, setValues] = useState<unknown[]>([]);
 
+  const renderedRef = useRef<RenderedStep[]>(renderedSteps);
+  const valuesRef = useRef<unknown[]>(values);
+
   const renderedById = useMemo(() => toRenderedMap(renderedSteps), [renderedSteps]);
   const scrollRef = useRef<ScrollView>(null);
   const currentRendered = renderedSteps[renderedSteps.length - 1];
   const currentStep = currentRendered ? stepMap[stepKey(currentRendered.id)] : undefined;
+
+  useEffect(() => {
+    renderedRef.current = renderedSteps;
+  }, [renderedSteps]);
+
+  useEffect(() => {
+    valuesRef.current = values;
+  }, [values]);
 
   const finish = (finalRendered: RenderedStep[], finalValues: unknown[]) => {
     handleEnd?.(createEndPayload(finalRendered, finalValues));
@@ -88,21 +99,23 @@ export default function ChatBot(props: ChatBotProps) {
   };
 
   const appendRendered = (entry: RenderedStep) => {
-    const merged = [...renderedSteps, entry];
+    const merged = [...renderedRef.current, entry];
     animateNext();
+    renderedRef.current = merged;
     setRenderedSteps(merged);
     return merged;
   };
 
   const replaceRendered = (nextRendered: RenderedStep[]) => {
     animateNext();
+    renderedRef.current = nextRendered;
     setRenderedSteps(nextRendered);
     return nextRendered;
   };
 
   const goTo = (id: StepId | undefined, value?: unknown, state?: { rendered: RenderedStep[]; values: unknown[] }) => {
-    const baseRendered = state?.rendered ?? renderedSteps;
-    const baseValues = state?.values ?? values;
+    const baseRendered = state?.rendered ?? renderedRef.current;
+    const baseValues = state?.values ?? valuesRef.current;
     const baseMap = toRenderedMap(baseRendered);
 
     if (id === undefined) {
@@ -129,6 +142,7 @@ export default function ChatBot(props: ChatBotProps) {
 
     if (shouldShowTyping) {
       animateNext();
+      renderedRef.current = withTyping;
       setRenderedSteps(withTyping);
     }
 
@@ -136,6 +150,7 @@ export default function ChatBot(props: ChatBotProps) {
       const withoutTyping = shouldShowTyping ? withTyping.filter((s) => String(s.id) !== String(typingId)) : withTyping;
       const merged = [...withoutTyping, rendered];
       animateNext();
+      renderedRef.current = merged;
       setRenderedSteps(merged);
 
       const nextId = nextStepId(next, { value, steps: toRenderedMap(merged) });
@@ -164,7 +179,8 @@ export default function ChatBot(props: ChatBotProps) {
       return;
     }
 
-    const nextValues = [...values, input];
+    const nextValues = [...valuesRef.current, input];
+    valuesRef.current = nextValues;
     setValues(nextValues);
 
     const userEcho: RenderedStep = { id: `${currentStep.id}-value`, message: input, value: input };
@@ -176,28 +192,33 @@ export default function ChatBot(props: ChatBotProps) {
   const handleOptionSelect = (value: unknown, trigger: StepId, label: string) => {
     if (!currentStep || !isOptionsStep(currentStep)) return;
 
-    const nextValues = [...values, value];
+    const nextValues = [...valuesRef.current, value];
+    valuesRef.current = nextValues;
     setValues(nextValues);
 
     const optionsStepId = String(currentStep.id);
-    const withSelected = renderedSteps.map((entry) =>
+    const withSelected = renderedRef.current.map((entry) =>
       String(entry.id) === optionsStepId ? { ...entry, value, metadata: { ...(entry.metadata ?? {}), selectedLabel: label } } : entry,
     );
 
     const userEcho: RenderedStep = { id: `${optionsStepId}-value`, message: label, value };
     const merged = [...withSelected, userEcho];
     animateNext();
+    renderedRef.current = merged;
     setRenderedSteps(merged);
 
     goTo(trigger, value, { rendered: merged, values: nextValues });
   };
 
   const triggerNextStep = ({ value, trigger }: { value?: unknown; trigger?: StepId } = {}) => {
-    const nextValues = value !== undefined ? [...values, value] : values;
-    if (value !== undefined) setValues(nextValues);
+    const nextValues = value !== undefined ? [...valuesRef.current, value] : valuesRef.current;
+    if (value !== undefined) {
+      valuesRef.current = nextValues;
+      setValues(nextValues);
+    }
 
     const derived = trigger ?? (currentStep ? nextStepId(currentStep, { value, steps: renderedById }) : undefined);
-    goTo(derived, value, { rendered: renderedSteps, values: nextValues });
+    goTo(derived, value, { rendered: renderedRef.current, values: nextValues });
   };
 
   const currentInputAttributes = currentStep && isUserStep(currentStep) ? currentStep.inputAttributes : undefined;

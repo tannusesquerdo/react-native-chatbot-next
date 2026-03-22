@@ -45,6 +45,24 @@ export const parityFixtures: FlowFixture[] = [
     },
   },
   {
+    name: 'options value available to next message through steps map',
+    steps: [
+      {
+        id: 'q1',
+        options: [
+          { label: 'Blue', value: 'blue', trigger: 'r1' },
+          { label: 'Red', value: 'red', trigger: 'r1' },
+        ],
+      },
+      { id: 'r1', message: ({ steps }) => `picked:${String(steps.q1?.value)}`, end: true },
+    ],
+    inputs: [{ kind: 'option', value: 'blue' }],
+    expected: {
+      renderedIds: ['q1', 'q1-value', 'r1'],
+      values: ['blue'],
+    },
+  },
+  {
     name: 'update removes target step and continues',
     steps: [
       { id: '0', message: 'A', trigger: '1' },
